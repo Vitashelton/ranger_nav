@@ -60,6 +60,14 @@ def generate_launch_description():
         ],
     )
 
+    # --- map -> odom identity TF (FAST-LIO odom is the world frame) ---
+    map_to_odom_tf = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='map_to_odom_tf',
+        arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
+    )
+
     # --- 3D RViz ---
     rviz_config = os.path.join(pkg_dir, 'rviz', 'ranger_3d_slam.rviz')
     rviz_node = Node(
@@ -76,5 +84,6 @@ def generate_launch_description():
         ranger_base_launch,
         ranger_sensors_launch,
         fast_lio_node,
+        map_to_odom_tf,
         rviz_node,
     ])
