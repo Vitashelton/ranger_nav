@@ -50,7 +50,7 @@ sudo apt install -y ros-humble-pcl-ros ros-humble-tf2-eigen
 # 编译
 cd /home/robot/fast_lio_ws
 source /opt/ros/humble/setup.bash
-source /home/robot/livox_ws/install/setup.bash
+
 colcon build --symlink-install --packages-select fast_lio
 ```
 
@@ -89,6 +89,8 @@ source /opt/ros/humble/setup.bash
 source /home/robot/livox_ws/install/setup.bash
 source /home/robot/agilex_ws/install/setup.bash
 source /home/robot/ranger_nav_ws/install/setup.bash
+source /home/robot/livox_ws/install/setup.bash
+
 
 # 一键启动底盘 + Livox + 静态TF + 点云转 /scan + slam_toolbox + RViz
 ros2 launch ranger_nav ranger_full.launch.py mode:=mapping
