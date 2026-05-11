@@ -60,6 +60,25 @@ def generate_launch_description():
             ('/Odometry', '/odom_lidar'),
         ],
     )
+        camera_init_to_map_tf = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='camera_init_to_map_tf',
+        arguments=[
+            '0', '0', '0',
+            '0', '0', '0',
+            'camera_init', 'map'
+        ],
+    )
+
+        camera_init_to_map_tf = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='camera_init_to_map_tf',
+        arguments=['0', '0', '0', '0', '0', '0', 'camera_init', 'map'],
+    )
+
+
 
     # --- map -> odom identity TF (FAST-LIO odom is the world frame) ---
     map_to_odom_tf = Node(
@@ -87,4 +106,6 @@ def generate_launch_description():
         fast_lio_node,
         map_to_odom_tf,
         rviz_node,
+        camera_init_to_map_tf,
+
     ])
