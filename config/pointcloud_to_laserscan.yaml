@@ -1,0 +1,32 @@
+/**:
+  ros__parameters:
+    # Input point cloud topic (from Livox MID360S)
+    cloud_in: /livox/lidar
+
+    # Output LaserScan topic
+    scan: /scan
+
+    # Frame to transform the point cloud into before slicing
+    target_frame: base_link
+
+    # TF tolerance (seconds)
+    transform_tolerance: 0.2
+
+    # Height filter: only points in [min_height, max_height] (meters) in target_frame
+    min_height: 0.05
+    max_height: 1.20
+
+    # Angular resolution of output LaserScan (radians)
+    angle_min: -3.14159
+    angle_max: 3.14159
+    angle_increment: 0.0043633   # ~0.25 deg -> 1440 points
+
+    # Range limits (meters)
+    range_min: 0.2
+    range_max: 20.0
+
+    # Use inf values for no-return directions
+    use_inf: true
+
+    # Concurrency level
+    concurrency_level: 1
