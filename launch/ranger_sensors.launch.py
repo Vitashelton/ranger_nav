@@ -46,7 +46,7 @@ def generate_launch_description():
         name='livox_lidar_publisher',
         output='screen',
         parameters=[{
-            'xfer_format': 0,
+            'xfer_format': 1,
             'multi_topic': 0,
             'data_src': 0,
             'publish_freq': 10.0,
@@ -58,25 +58,25 @@ def generate_launch_description():
         }],
     )
 
-    # --- PointCloud2 -> LaserScan ---
-    pcl_to_scan_config = os.path.join(
-        pkg_dir, 'config', 'pointcloud_to_laserscan.yaml'
-    )
+    # # --- PointCloud2 -> LaserScan ---
+    # pcl_to_scan_config = os.path.join(
+    #     pkg_dir, 'config', 'pointcloud_to_laserscan.yaml'
+    # )
 
-    pcl_to_scan = Node(
-        package='pointcloud_to_laserscan',
-        executable='pointcloud_to_laserscan_node',
-        name='pointcloud_to_laserscan',
-        output='screen',
-        parameters=[pcl_to_scan_config],
-        remappings=[
-            ('cloud_in', '/livox/lidar'),
-            ('scan', '/scan'),
-        ],
-    )
+    # pcl_to_scan = Node(
+    #     package='pointcloud_to_laserscan',
+    #     executable='pointcloud_to_laserscan_node',
+    #     name='pointcloud_to_laserscan',
+    #     output='screen',
+    #     parameters=[pcl_to_scan_config],
+    #     remappings=[
+    #         ('cloud_in', '/livox/lidar'),
+    #         ('scan', '/scan'),
+    #     ],
+    # )
 
     return LaunchDescription([
         static_tf,
         livox_driver,
-        pcl_to_scan,
+        #pcl_to_scan,
     ])
