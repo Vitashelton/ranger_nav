@@ -2,10 +2,13 @@
 Full-system launch for Ranger Mini 2.0 — chassis + sensors + SLAM + Nav2.
 
 Usage:
-  # Mapping mode (no map loaded, SLAM builds map)
+  # 2D SLAM (slam_toolbox, lightweight)
   ros2 launch ranger_nav ranger_full.launch.py mode:=mapping
 
-  # Navigation mode (load map, localize, navigate)
+  # 3D SLAM (FAST-LIO2, LiDAR-IMU odometry, low drift)
+  ros2 launch ranger_nav ranger_full.launch.py mode:=mapping3d
+
+  # Navigation (load map, localize, navigate)
   ros2 launch ranger_nav ranger_full.launch.py mode:=nav map:=/path/to/map.yaml
 """
 import os
@@ -25,26 +28,43 @@ def generate_launch_description():
     # --- Mode selection ---
     mode = LaunchConfiguration('mode', default='mapping')
     is_mapping = PythonExpression(["'", mode, "' == 'mapping'"])
+    is_mapping3d = PythonExpression(["'", mode, "' == 'mapping3d'"])
     is_nav = PythonExpression(["'", mode, "' == 'nav'"])
+    is_2d_or_nav = PythonExpression(["'", mode, "' in ('mapping', 'nav')"])
 
     map_yaml = LaunchConfiguration('map', default='/home/robot/maps/ranger_map.yaml')
     use_rviz = LaunchConfiguration('use_rviz', default='true')
 
-    # --- Sub-launches (always on) ---
+    # ============================================================
+    # Sub-launches (always on for 2D / nav modes)
+    # ============================================================
     ranger_base_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_dir, 'launch', 'ranger_base.launch.py')
         ),
+        condition=IfCondition(is_2d_or_nav),
     )
 
     ranger_sensors_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_dir, 'launch', 'ranger_sensors.launch.py')
         ),
+        condition=IfCondition(is_2d_or_nav),
     )
 
     # ============================================================
-    # Mapping mode: slam_toolbox async SLAM
+    # 3D SLAM mode: FAST-LIO2 (self-contained: includes base + sensors)
+    # ============================================================
+    ranger_3d_slam_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_dir, 'launch', 'ranger_3d_slam.launch.py')
+        ),
+        launch_arguments={'use_rviz': 'false'}.items(),
+        condition=IfCondition(is_mapping3d),
+    )
+
+    # ============================================================
+    # 2D Mapping mode: slam_toolbox async SLAM
     # ============================================================
     slam_mapping_config = os.path.join(pkg_dir, 'config', 'slam_toolbox_mapping.yaml')
 
@@ -139,28 +159,45 @@ def generate_launch_description():
     )
 
     # ============================================================
-    # RViz2
+    # RViz2 — 2D config for mapping/nav; 3D config for mapping3d
     # ============================================================
-    rviz_config = os.path.join(pkg_dir, 'rviz', 'ranger_nav.rviz')
-    rviz2_node = Node(
+    rviz_2d_config = os.path.join(pkg_dir, 'rviz', 'ranger_nav.rviz')
+    rviz_3d_config = os.path.join(pkg_dir, 'rviz', 'ranger_3d_slam.rviz')
+
+    rviz2_2d_node = Node(
         package='rviz2',
         executable='rviz2',
         name='rviz2',
-        arguments=['-d', rviz_config],
-        condition=IfCondition(use_rviz),
+        arguments=['-d', rviz_2d_config],
+        condition=IfCondition(
+            PythonExpression(["'", use_rviz, "' == 'true' and (", is_2d_or_nav, ")"])
+        ),
+    )
+
+    rviz2_3d_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        arguments=['-d', rviz_3d_config],
+        condition=IfCondition(
+            PythonExpression(["'", use_rviz, "' == 'true' and (", is_mapping3d, ")"])
+        ),
     )
 
     return LaunchDescription([
         DeclareLaunchArgument('mode', default_value='mapping',
-                              description="'mapping' or 'nav'"),
+                              description="'mapping' | 'mapping3d' | 'nav'"),
         DeclareLaunchArgument('map', default_value='/home/robot/maps/ranger_map.yaml'),
         DeclareLaunchArgument('use_rviz', default_value='true'),
 
-        # Always-on: chassis + sensors
+        # Always-on: chassis + sensors (2D/nav modes)
         ranger_base_launch,
         ranger_sensors_launch,
 
-        # Mode: mapping
+        # Mode: 3D mapping (self-contained base+sensors+fast_lio)
+        ranger_3d_slam_launch,
+
+        # Mode: 2D mapping
         slam_mapping_node,
 
         # Mode: nav
@@ -172,5 +209,7 @@ def generate_launch_description():
         bt_navigator,
         lifecycle_manager,
 
-        rviz2_node,
+        # RViz (2D for mapping/nav, 3D for mapping3d)
+        rviz2_2d_node,
+        rviz2_3d_node,
     ])
